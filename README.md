@@ -1,93 +1,152 @@
-# Kernel_Prof
+# Kernel Prof
 
+> Unified repository for GPU kernel implementations and profiling results across **CUDA**, **Triton**, and **Helion**.
 
+---
 
-## Getting started
+## Overview
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+This repo provides a standardized structure for storing GPU kernel source code alongside their profiling artifacts. Each kernel operation is organized by framework, making it easy to compare implementations and performance across CUDA, Triton, and Helion.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+**Currently tracked operations:**
 
-## Add your files
+| Operation | Directory | Description |
+|-----------|-----------|-------------|
+| Vector Addition | [`vec-add/`](vec-add/) | Element-wise vector addition |
+| Matrix Multiplication | [`matmul/`](matmul/) | Dense matrix multiplication |
+| Softmax | [`softmax/`](softmax/) | Softmax activation |
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+---
+
+## Directory Layout
+
+Every operation follows the same hierarchy:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/ahpoddar/kernel_prof.git
-git branch -M main
-git push -uf origin main
+<operation>/
+├── cuda/
+│   ├── kernel/    # source code (.py, .cu)
+│   └── results/   # profiling artifacts (.ncu-rep, .nsys-rep)
+├── triton/
+│   ├── kernel/
+│   └── results/
+└── helion/
+    ├── kernel/
+    └── results/
 ```
 
-## Integrate with your tools
+---
 
-* [Set up project integrations](https://gitlab.com/ahpoddar/kernel_prof/-/settings/integrations)
+## Naming Conventions
 
-## Collaborate with your team
+All filenames — both kernel source and result artifacts — follow a single consistent pattern:
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```
+<op>_<framework>_<config>.<ext>
+```
 
-## Test and Deploy
+| Field | Description | Values |
+|-------|-------------|--------|
+| `<op>` | Short operation name | `vadd`, `matmul`, `softmax` |
+| `<framework>` | Implementation framework | `cuda`, `triton`, `helion` |
+| `<config>` | Configuration or variant identifier | `configG`, `configH`, `mixedMP`, `tiled`, etc. |
+| `<ext>` | File extension | `.py` for kernels, `.ncu-rep` / `.nsys-rep` for results |
 
-Use the built-in continuous integration in GitLab.
+### Kernel → Result mapping
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+The result file is the **exact same base name** as its kernel, with the profiler extension:
 
-***
+```
+vadd_triton_configG.py        →  vadd_triton_configG.ncu-rep
+matmul_cuda_tiled.py          →  matmul_cuda_tiled.ncu-rep
+softmax_helion_configA.py     →  softmax_helion_configA.nsys-rep
+```
 
-# Editing this README
+### Extra parameters (optional)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+When profiling the same kernel with **different input sizes or data types**, append the parameters:
 
-## Suggestions for a good README
+```
+<op>_<framework>_<config>_<params>.<ext>
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Example: `matmul_triton_configA_M2048_N2048_K2048_fp16.ncu-rep`
 
-## Name
-Choose a self-explaining name for your project.
+Common parameter tokens:
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+| Token | Meaning |
+|-------|---------|
+| `M`, `N`, `K` | Matrix dimensions |
+| `rows`, `cols` | Row / column counts |
+| `BLK` | Block size |
+| `fp16`, `fp32`, `bf16` | Data type |
+| `WARPS` | Number of warps |
+| `STAGES` | Pipeline stages |
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+---
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Quick Reference — vec-add
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```
+vec-add/
+├── cuda/
+│   ├── kernel/
+│   │   ├── vadd_cuda_configG.py
+│   │   ├── vadd_cuda_configH.py
+│   │   └── vadd_cuda_mixedMP.py
+│   └── results/
+│       ├── vadd_cuda_configG.ncu-rep
+│       ├── vadd_cuda_configH.ncu-rep
+│       └── vadd_cuda_mixedMP.ncu-rep
+├── triton/
+│   ├── kernel/
+│   │   ├── vadd_triton_configG.py
+│   │   ├── vadd_triton_configH.py
+│   │   └── vadd_triton_mixedMP.py
+│   └── results/
+│       ├── vadd_triton_configG.ncu-rep
+│       ├── vadd_triton_configH.ncu-rep
+│       └── vadd_triton_mixedMP.ncu-rep
+└── helion/
+    ├── kernel/
+    │   ├── vadd_helion_configG.py
+    │   ├── vadd_helion_configH.py
+    │   └── vadd_helion_mixedMP.py
+    └── results/
+        ├── vadd_helion_configG.ncu-rep
+        ├── vadd_helion_configH.ncu-rep
+        └── vadd_helion_mixedMP.ncu-rep
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+---
 
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### Adding results for an existing operation
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+1. Place your kernel in `<operation>/<framework>/kernel/` following the naming convention.
+2. Place the corresponding `.ncu-rep` / `.nsys-rep` in `<operation>/<framework>/results/` with the **matching base name**.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### Adding a new operation
+
+1. Create the directory structure:
+   ```bash
+   mkdir -p <operation>/{cuda,triton,helion}/{kernel,results}
+   ```
+2. Add kernel source and profiling results following the conventions above.
+3. Update the **"Currently tracked operations"** table in this README.
+
+---
+
+## Profiling Tools
+
+| Tool | Purpose | Output |
+|------|---------|--------|
+| **Nsight Compute** (`ncu`) | Kernel-level GPU profiling | `.ncu-rep` |
+| **Nsight Systems** (`nsys`) | System-level timeline profiling | `.nsys-rep` |
+
+---
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+See [LICENSE](LICENSE).
