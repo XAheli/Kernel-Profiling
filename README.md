@@ -95,27 +95,40 @@ vec-add/
 │   │   ├── vadd_cuda_configH.py
 │   │   └── vadd_cuda_mixedMP.py
 │   └── results/
+│       ├── .gitkeep
+│       ├── vecadd_configA.ncu-rep
+│       ├── vecadd_configB.ncu-rep
+│       ├── vecadd_fp32.ncu-rep
 │       ├── vadd_cuda_configG.ncu-rep
 │       ├── vadd_cuda_configH.ncu-rep
 │       └── vadd_cuda_mixedMP.ncu-rep
-├── triton/
+│
+├── helion/
 │   ├── kernel/
-│   │   ├── vadd_triton_configG.py
-│   │   ├── vadd_triton_configH.py
-│   │   └── vadd_triton_mixedMP.py
+│   │   ├── vadd_helion_configG.py
+│   │   ├── vadd_helion_configH.py
+│   │   └── vadd_helion_mixedMP.py
 │   └── results/
-│       ├── vadd_triton_configG.ncu-rep
-│       ├── vadd_triton_configH.ncu-rep
-│       └── vadd_triton_mixedMP.ncu-rep
-└── helion/
+│       ├── fp32_helion.ncu-rep
+│       ├── h_ConfigA.ncu-rep
+│       ├── h_ConfigB.ncu-rep
+│       ├── vadd_helion_configG.ncu-rep
+│       ├── vadd_helion_configH.ncu-rep
+│       └── vadd_helion_mixedMP.ncu-rep
+│
+└── triton/
     ├── kernel/
-    │   ├── vadd_helion_configG.py
-    │   ├── vadd_helion_configH.py
-    │   └── vadd_helion_mixedMP.py
+    │   ├── vadd_triton_configG.py
+    │   ├── vadd_triton_configH.py
+    │   └── vadd_triton_mixedMP.py
     └── results/
-        ├── vadd_helion_configG.ncu-rep
-        ├── vadd_helion_configH.ncu-rep
-        └── vadd_helion_mixedMP.ncu-rep
+        ├── .gitkeep
+        ├── small-block-vecaddConfigA.ncu-rep
+        ├── small-block-vecaddConfigB.ncu-rep
+        ├── small-block-vecaddfp32.ncu-rep
+        ├── vadd_triton_configG.ncu-rep
+        ├── vadd_triton_configH.ncu-rep
+        └── vadd_triton_mixedMP.ncu-rep
 ```
 
 ---
