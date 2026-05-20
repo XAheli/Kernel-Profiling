@@ -13,7 +13,7 @@ This repo provides a standardized structure for storing GPU kernel source code a
 | Operation | Directory | Description |
 |-----------|-----------|-------------|
 | Vector Addition | [`vec-add/`](vec-add/) | Element-wise vector addition |
-| Matrix Multiplication | [`matmul/`](matmul/) | Dense matrix multiplication |
+| Batch Matrix Multiplication | [`matmul/`](matmul/) | Batchwise matrix multiplication |
 | Softmax | [`softmax/`](softmax/) | Softmax activation |
 
 ---
