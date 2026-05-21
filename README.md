@@ -1,6 +1,6 @@
 # Kernel Prof
 
-Unified repository for GPU kernel implementations and Nsight profiling artifacts across **CUDA**, **Triton**, and **Helion** (NVIDIA H200).
+Unified repository for GPU kernel implementations and Nsight profiling artifacts across **CUDA**, **Triton**, and **Helion** (NVIDIA H200). (Not all rep files present as size limit exceeding)
 
 ## Overview
 
