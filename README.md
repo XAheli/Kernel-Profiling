@@ -6,7 +6,7 @@ This repository contains the complete source code and raw Nsight Compute profili
 
 > **Blog post:** _Coming soon_ <!-- TODO: replace with link -->
 >
-> **Full report:** [Kernel Profiling Research Report (PDF)](Kernel_Profiling_Research_Report.pdf)
+> **Full report:** [Kernel Profiling Research Report (PDF)](Kernel_Profiling_Research_Intern_Report.pdf)
 
 ---
 
