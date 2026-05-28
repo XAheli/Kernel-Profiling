@@ -1,12 +1,21 @@
-# Kernel Profiling: CUDA vs Triton vs Helion
+<p align="center">
+  <h1 align="center">Kernel Profiling: CUDA vs Triton vs Helion</h1>
+  <p align="center">
+    <strong>A systematic comparison of GPU kernel performance across three frameworks on NVIDIA H200</strong>
+  </p>
+  <p align="center">
+    <a href="https://github.com/XAheli/Kernel-Profiling/blob/main/Kernel_Profiling_Research_Intern_Report.pdf"><img src="https://img.shields.io/badge/Research-Report-blue" alt="Report"></a>
+    <a href="https://developer.nvidia.com/tools-overview/nsight-compute/get-started"><img src="https://img.shields.io/badge/NVIDIA-Nsight_Compute-76B900?logo=nvidia" alt="Nsight Compute"></a>
+    <a href="https://next.redhat.com/2025/11/19/triton-kernel-profiling-with-nvidia-nsight-tools/"><img src="https://img.shields.io/badge/Red_Hat-Blog-EE0000?logo=redhat" alt="Red Hat Blog"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Blog_Post-Coming_Soon-orange" alt="Blog"></a>
+  </p>
+</p>
 
-**A systematic comparison of GPU kernel performance across three frameworks on NVIDIA H200.**
+---
 
-This repository contains the complete source code and raw Nsight Compute profiling data for vector addition, batched matrix multiplication, and softmax — each implemented identically in CUDA, Triton, and Helion. Every kernel is a standalone script you can run, profile, and compare.
+This repository contains the complete source code and raw [Nsight Compute](https://developer.nvidia.com/tools-overview/nsight-compute/get-started) profiling data for **vector addition**, **batched matrix multiplication**, and **softmax** — each implemented identically in CUDA, Triton, and Helion. Every kernel is a standalone script you can run, profile, and compare.
 
-> **Blog post:** _Coming soon_ <!-- TODO: replace with link -->
->
-> **Full report:** [Kernel Profiling Research Report (PDF)](Kernel_Profiling_Research_Intern_Report.pdf)
+Built during an internship at the **Red Hat PyTorch Team** (Bangalore, India) as part of ongoing research into [GPU kernel profiling with NVIDIA Nsight Tools](https://next.redhat.com/2025/11/19/triton-kernel-profiling-with-nvidia-nsight-tools/).
 
 ---
 
@@ -39,7 +48,7 @@ ncu --set full -o matmul/triton/results/matmul_triton_configG \
 ncu-ui matmul/triton/results/matmul_triton_configG.ncu-rep
 ```
 
-**Requirements:** Python 3.10+, CUDA 12.8+, NVIDIA GPU (tested on H200 141 GB HBM3e)
+**Requirements:** Python 3.10+ | CUDA 12.8+ | NVIDIA GPU (tested on H200, 141 GB HBM3e)
 
 ---
 
@@ -57,8 +66,6 @@ ncu-ui matmul/triton/results/matmul_triton_configG.ncu-rep
     ├── kernel/       # @helion.kernel DSL
     └── results/
 ```
-
-Three operations, three frameworks, three workload scales:
 
 | Operation | What it tests |
 |-----------|---------------|
@@ -78,21 +85,18 @@ Each operation runs at three scales derived from transformer model dimensions:
 | `configH` | 24 | 48K | 2,048 | FP32 | Heavy — memory-capacity stress test |
 | `mixedMP` | 64 | 16K | 2,048 | FP16 | Mixed precision — FP16 I/O, FP32 accumulation |
 
-File naming follows: `<op>_<framework>_<config>.py` with matching `.ncu-rep` results.
+File naming: `<op>_<framework>_<config>.py` with matching `.ncu-rep` results.
 
 ---
 
-## Citation
+## Related Resources
 
-```bibtex
-@misc{poddar2026kernelprofiling,
-  author       = {Poddar, Aheli},
-  title        = {Kernel Profiling: Comparative Analysis of CUDA, Triton, and Helion GPU Kernels},
-  year         = {2026},
-  url          = {https://github.com/XAheli/Kernel-Profiling}
-}
-```
+- [NVIDIA Nsight Compute — Getting Started](https://developer.nvidia.com/tools-overview/nsight-compute/get-started)
+- [Triton Kernel Profiling with NVIDIA Nsight Tools — Red Hat Emerging Technologies Blog](https://next.redhat.com/2025/11/19/triton-kernel-profiling-with-nvidia-nsight-tools/)
+- [Full Research Report (PDF)](Kernel_Profiling_Research_Intern_Report.pdf)
 
-## License
+---
 
-BSD 3-Clause — see [LICENSE](LICENSE).
+<p align="center">
+  <sub>Built with care at <strong>Red Hat</strong> · PyTorch Team · Bangalore, India</sub>
+</p>
