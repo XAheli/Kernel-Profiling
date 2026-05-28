@@ -6,8 +6,8 @@
   <p align="center">
     <a href="https://github.com/XAheli/Kernel-Profiling/blob/main/Kernel_Profiling_Research_Intern_Report.pdf"><img src="https://img.shields.io/badge/Research-Report-blue" alt="Report"></a>
     <a href="https://developer.nvidia.com/tools-overview/nsight-compute/get-started"><img src="https://img.shields.io/badge/NVIDIA-Nsight_Compute-76B900?logo=nvidia" alt="Nsight Compute"></a>
-    <a href="https://next.redhat.com/2025/11/19/triton-kernel-profiling-with-nvidia-nsight-tools/"><img src="https://img.shields.io/badge/Red_Hat-Blog-EE0000?logo=redhat" alt="Red Hat Blog"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Blog_Post-Coming_Soon-orange" alt="Blog"></a>
+    <a href=" "><img src="https://img.shields.io/badge/Red_Hat-Blog-EE0000?logo=redhat" alt="Red Hat Blog"></a>
+    <!-- <a href="#"><img src="https://img.shields.io/badge/Blog_Post-Coming_Soon-orange" alt="Blog"></a> -->
   </p>
 </p>
 
@@ -15,7 +15,7 @@
 
 This repository contains the complete source code and raw [Nsight Compute](https://developer.nvidia.com/tools-overview/nsight-compute/get-started) profiling data for **vector addition**, **batched matrix multiplication**, and **softmax** — each implemented identically in CUDA, Triton, and Helion. Every kernel is a standalone script you can run, profile, and compare.
 
-Built during an internship at the **Red Hat PyTorch Team** (Bangalore, India) as part of ongoing research into [GPU kernel profiling with NVIDIA Nsight Tools](https://next.redhat.com/2025/11/19/triton-kernel-profiling-with-nvidia-nsight-tools/).
+Built during our internship at the **Red Hat PyTorch Team** (Bangalore, India) as part of ongoing research into [GPU kernel profiling with NVIDIA Nsight Tools](https://next.redhat.com/2025/11/19/triton-kernel-profiling-with-nvidia-nsight-tools/).
 
 ---
 
