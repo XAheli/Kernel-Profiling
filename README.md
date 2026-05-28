@@ -1,71 +1,159 @@
-# Kernel Prof
+# Kernel Profiling: CUDA vs Triton vs Helion on NVIDIA H200
 
-Unified repository for GPU kernel implementations and Nsight profiling artifacts across **CUDA**, **Triton**, and **Helion** (NVIDIA H200). (Not all rep files present as size limit exceeding)
+Comparative GPU kernel implementations and Nsight Compute profiling artifacts for **CUDA**, **Triton**, and **Helion** — benchmarked on an NVIDIA H200 (Hopper architecture, 141 GB HBM3e).
 
-## Overview
+> **Blog post:** _Coming soon_ <!-- TODO: replace with link -->
 
-Each operation stores source under `kernel/` and matching profiler outputs under `results/`, using the same layout for every framework so implementations and NCU/nsys captures stay easy to compare.
+## Motivation
+
+Hand-writing CUDA is the traditional path to high-performance GPU kernels, but modern alternatives like Triton and Helion promise comparable throughput with dramatically less code. This repository provides the full source and raw profiling data behind a systematic comparison across three workload types at multiple scales and precisions.
+
+## Operations
 
 | Operation | Directory | Description |
 |-----------|-----------|-------------|
-| Vector addition | `vec-add/` | Element-wise add on contiguous 1D buffers ($n = B \cdot S \cdot H$) |
-| Batch matrix multiplication | `matmul/` | Batched GEMM / BMM |
-| Softmax | `softmax/` | Softmax forward and backward along the hidden dimension |
+| Vector Addition | [`vec-add/`](vec-add/) | Element-wise add on contiguous 1-D buffers |
+| Batched MatMul | [`matmul/`](matmul/) | Batched GEMM: `(B, M, K) @ (B, K, N)` |
+| Softmax | [`softmax/`](softmax/) | Online softmax forward + backward along hidden dim |
 
-## Directory layout
+Each operation is implemented in all three frameworks with identical APIs, making them drop-in replacements for profiling comparison.
 
-```
-<operation>/
-├── cuda/
-│   ├── kernel/     # .py launchers, inline CUDA, or .cu
-│   └── results/    # .ncu-rep, .nsys-rep
-├── triton/
-│   ├── kernel/
-│   └── results/
-└── helion/
-    ├── kernel/
-    └── results/
-```
+## Configuration Profiles
 
-## Naming convention
+All operations share three workload configurations derived from transformer model parameters:
 
-```
-<op>_<framework>_<config>[_<params>].<ext>
-```
+| Config | Batch | Seq / M | Hidden / K, N | Dtype | Intent |
+|--------|-------|---------|---------------|-------|--------|
+| **configG** | 48 | 12,000 | 1,536 | FP32 | General — moderate compute + memory |
+| **configH** | 24 | 48,000 | 2,048 | FP32 | Heavy — stress memory capacity + bandwidth |
+| **mixedMP** | 64 | 16,000 | 2,048 | FP16 | Mixed precision — FP16 I/O, FP32 accumulation |
 
-| Field | Values | Example |
-|-------|--------|---------|
-| `<op>` | `vadd`, `matmul`, `softmax` | `vadd_cuda_configG.py` |
-| `<framework>` | `cuda`, `triton`, `helion` | `softmax_triton_configA.py` |
-| `<config>` | Shape / sweep id | `configA` … `configH`, `mixedMP`, `tiled` |
-| `<params>` | Optional (dtype, tile size, …) | `fp16`, `M2048_N2048_K2048`, `BLK512` |
-| `<ext>` | `.py` (kernel), `.ncu-rep` / `.nsys-rep` (results) | |
+### Mapped to each operation
 
-**Kernel → result:** same basename, profiler extension only.
+| Operation | Config G | Config H | Mixed MP |
+|-----------|----------|----------|----------|
+| **vec-add** | N = 884 M | N = 2.36 B | N = 2.10 B (FP16) |
+| **matmul** | (48, 12K, 1536) × (48, 1536, 1536) | (24, 48K, 2048) × (24, 2048, 2048) | (64, 16K, 2048) × (64, 2048, 2048) FP16 |
+| **softmax** | (B, S, H) = (48, 12K, 1536) | (24, 48K, 2048) | (64, 16K, 2048) FP16 |
+
+## Repository Structure
 
 ```
-vadd_triton_configG.py     →  vadd_triton_configG.ncu-rep
-matmul_cuda_tiled.py       →  matmul_cuda_tiled.ncu-rep
-softmax_helion_configA.py  →  softmax_helion_configA.nsys-rep
+├── vec-add/
+│   ├── cuda/
+│   │   ├── kernel/          # Python launchers with inline CUDA
+│   │   └── results/         # .ncu-rep profiling reports
+│   ├── triton/
+│   │   ├── kernel/          # @triton.jit kernels
+│   │   └── results/
+│   └── helion/
+│       ├── kernel/          # @helion.kernel DSL
+│       └── results/
+├── matmul/
+│   └── (same layout)
+├── softmax/
+│   └── (same layout)
+├── archive/                  # Early-iteration artifacts (old naming)
+├── Kernel_Profiling_Research_Report.pdf
+├── requirements.txt
+└── LICENSE
 ```
 
-**Optional parameter tokens:** `M`, `N`, `K` (GEMM dims); `fp32`, `fp16`, `bf16`; `BLK` (block size); `WARPS`; `STAGES`.
+## Naming Convention
 
-## Configuration labels
+```
+<op>_<framework>_<config>.<ext>
+```
 
-Report sweeps use **Config A–H** and fixed dtype rows (e.g. $(64, 8\text{K}, 1024)$ in FP32/FP16/BF16). Filename `config` tokens should match those labels where possible (`configG`, `configH`, etc.).
+| Token | Values |
+|-------|--------|
+| `<op>` | `vadd`, `matmul`, `softmax_fwd_bwd` |
+| `<framework>` | `cuda`, `triton`, `helion` |
+| `<config>` | `configG`, `configH`, `mixedMP` |
+| `<ext>` | `.py` (kernel source), `.ncu-rep` (Nsight Compute report) |
 
-**CUDA vecadd note:** Configs **G** and **H** use a 65535-block cap and a grid-stride loop; other configs use a standard 256-thread, one-element-per-thread launch unless noted in the kernel file.
+Kernel and result files share the same basename:
+```
+matmul_triton_configG.py  →  matmul_triton_configG.ncu-rep
+```
 
-## Profiling workflow
+## Getting Started
 
-1. Warm up / autotune off-NCU (Triton `@autotune`, Helion JIT) where applicable.
-2. Profile with Nsight Compute (`ncu --set full …`) or Nsight Systems as needed.
-3. Drop the `.ncu-rep` / `.nsys-rep` next to the kernel name under `results/`.
+### Prerequisites
 
-Environment hints used in development: CUDA 12.x toolchain, `TMPDIR` for Triton/Helion cache, contiguous GPU tensors for 1D vecadd launches.
+- NVIDIA GPU (tested on H200, Hopper architecture)
+- CUDA 12.8+ toolkit
+- Python 3.10+
 
-## Related work
+### Installation
 
-Internship analysis and tables (duration, DRAM, occupancy, instruction mix, GFLOPs) live in the separate **Kernel Profiling Research Report**; this repo holds the reproducible kernels and raw profiler artifacts referenced there.
+```bash
+git clone https://github.com/XAheli/Kernel-Profiling.git
+cd Kernel-Profiling
+pip install -r requirements.txt
+```
 
+### Running a Kernel
+
+Each kernel file is a standalone script that allocates tensors, runs the kernel with warmup, and checks correctness against PyTorch:
+
+```bash
+python matmul/triton/kernel/matmul_triton_configG.py
+```
+
+### Profiling with Nsight Compute
+
+```bash
+ncu --set full -o matmul/triton/results/matmul_triton_configG \
+    python matmul/triton/kernel/matmul_triton_configG.py
+```
+
+### Viewing Results
+
+Open `.ncu-rep` files in [NVIDIA Nsight Compute](https://developer.nvidia.com/nsight-compute):
+
+```bash
+ncu-ui matmul/triton/results/matmul_triton_configG.ncu-rep
+```
+
+## Key Findings
+
+Detailed analysis with metrics tables lives in the [Kernel Profiling Research Report](Kernel_Profiling_Research_Report.pdf). Summary:
+
+- **Vec-add (memory-bound):** Triton and Helion reach 86–92% DRAM bandwidth utilization vs 36–68% for naive CUDA.
+- **MatMul (compute-bound):** Naive CUDA is 10–100× slower due to lack of tensor core usage; Triton/Helion autotune to near-peak throughput.
+- **Softmax:** Forward pass achieves up to 93.5% compute throughput (Triton FP16); backward pass is memory-bound with high stall rates due to reductions.
+- **Mixed precision:** FP16/BF16 yields 10–30× speedups on Triton/Helion via tensor cores.
+
+## Hardware
+
+| Spec | Value |
+|------|-------|
+| GPU | NVIDIA H200 (Hopper) |
+| Memory | 141 GB HBM3e |
+| CUDA Toolkit | 12.8 |
+| Driver | 570.x |
+
+## Profiling Tools
+
+| Tool | Purpose | Output |
+|------|---------|--------|
+| **Nsight Compute** (`ncu`) | Kernel-level GPU metrics | `.ncu-rep` |
+| **Nsight Systems** (`nsys`) | System-level timeline | `.nsys-rep` |
+
+## Citation
+
+If you find this work useful, please cite:
+
+```bibtex
+@misc{poddar2026kernelprofiling,
+  author       = {Poddar, Aheli},
+  title        = {Kernel Profiling: Comparative Analysis of CUDA, Triton, and Helion GPU Kernels},
+  year         = {2026},
+  url          = {https://github.com/XAheli/Kernel-Profiling}
+}
+```
+
+## License
+
+BSD 3-Clause. See [LICENSE](LICENSE).
