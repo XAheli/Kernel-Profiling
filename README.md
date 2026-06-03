@@ -4,10 +4,10 @@
     <strong>A systematic comparison of GPU kernel performance across three frameworks on NVIDIA H200</strong>
   </p>
   <p align="center">
+    <a href="https://xaheli.github.io/Kernel-Profiling/data_dashboard/index.html"><img src="https://img.shields.io/badge/Live_Dashboard-Data_Viz-ff69b4" alt="Dashboard"></a>
     <a href="https://github.com/XAheli/Kernel-Profiling/blob/main/Kernel_Profiling_Research_Intern%20Report.pdf"><img src="https://img.shields.io/badge/Research-Report-blue" alt="Report"></a>
     <a href="https://developer.nvidia.com/tools-overview/nsight-compute/get-started"><img src="https://img.shields.io/badge/NVIDIA-Nsight_Compute-76B900?logo=nvidia" alt="Nsight Compute"></a>
-    <a href=" "><img src="https://img.shields.io/badge/Red_Hat-Blog-EE0000?logo=redhat" alt="Red Hat Blog"></a>
-    <!-- <a href="#"><img src="https://img.shields.io/badge/Blog_Post-Coming_Soon-orange" alt="Blog"></a> -->
+    <a href="https://next.redhat.com/2025/11/19/triton-kernel-profiling-with-nvidia-nsight-tools/"><img src="https://img.shields.io/badge/Red_Hat-Blog-EE0000?logo=redhat" alt="Red Hat Blog"></a>
   </p>
 </p>
 
