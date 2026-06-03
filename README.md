@@ -75,15 +75,6 @@ ncu-ui matmul/triton/results/matmul_triton_configG.ncu-rep
 
 ---
 
-## Workload Configurations
-
-Each operation runs at three scales derived from transformer model dimensions:
-
-| Config | Batch | Seq | Hidden | Dtype | Profile |
-|--------|-------|-----|--------|-------|---------|
-| `configG` | 48 | 12K | 1,536 | FP32 | Moderate — balanced compute/memory |
-| `configH` | 24 | 48K | 2,048 | FP32 | Heavy — memory-capacity stress test |
-| `mixedMP` | 64 | 16K | 2,048 | FP16 | Mixed precision — FP16 I/O, FP32 accumulation |
 
 File naming: `<op>_<framework>_<config>.py` with matching `.ncu-rep` results.
 
