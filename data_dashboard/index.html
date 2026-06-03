@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU Kernel Performance Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f5f5f7;
+            --bg-secondary: white;
+            --bg-tertiary: #fafafa;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #e5e5e5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            padding: 20px;
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1d1d1f;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3d3d3d;
+            --text-primary: #f5f5f7;
+            --text-secondary: #98989d;
+            --border-color: #48484a;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 40px;
+            text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .header-actions {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .dark-mode-toggle, .download-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .dark-mode-toggle:hover, .download-btn:hover {
+            background: var(--border-color);
+        }
+
+        .controls {
+            background: var(--bg-tertiary);
+            padding: 24px 40px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 400;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 250px;
+        }
+
+        select:hover {
+            border-color: var(--text-secondary);
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #0071e3;
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+        }
+
+        .stats-bar {
+            background: var(--bg-secondary);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .stat {
+            text-align: center;
+            padding: 12px 24px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .legend {
+            background: var(--bg-secondary);
+            padding: 20px 40px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 32px 40px 48px;
+            max-height: 70vh;
+            overflow-y: auto;
+            background: var(--bg-tertiary);
+        }
+
+        .perf-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 13px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+        }
+
+        .perf-table th {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 16px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .perf-table th:first-child {
+            text-align: left;
+        }
+
+        .header-impl {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-unit {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .perf-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .perf-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .config-cell {
+            font-weight: 600;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .config-detail {
+            display: block;
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-top: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .best {
+            background: #52c896;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        body.dark-mode .best {
+            background: #3d9970;
+            color: white;
+        }
+
+        .second {
+            background: #ffa726;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        body.dark-mode .second {
+            background: #ff8f00;
+            color: white;
+        }
+
+        .worst {
+            background: #ef5350;
+            color: white;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        body.dark-mode .worst {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .speedup {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .speedup-high {
+            background: #52c896;
+            color: white;
+        }
+
+        body.dark-mode .speedup-high {
+            background: #3d9970;
+            color: white;
+        }
+
+        .speedup-medium {
+            background: #ffa726;
+            color: white;
+        }
+
+        body.dark-mode .speedup-medium {
+            background: #ff8f00;
+            color: white;
+        }
+
+        .speedup-extreme {
+            background: #ab47bc;
+            color: white;
+        }
+
+        body.dark-mode .speedup-extreme {
+            background: #8e24aa;
+            color: white;
+        }
+
+        .speedup-regression {
+            background: #ef5350;
+            color: white;
+        }
+
+        body.dark-mode .speedup-regression {
+            background: #d32f2f;
+            color: white;
+        }
+
+        footer {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 32px;
+            text-align: center;
+            font-size: 14px;
+            border-top: 2px solid var(--border-color);
+            font-weight: 400;
+        }
+
+        tr:hover {
+            background: var(--bg-tertiary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GPU Kernel Performance: COMPLETE Dataset</h1>
+            <p class="subtitle">NVIDIA H200 • CUDA vs Triton vs Helion • All 54 Tables</p>
+            <div class="header-actions">
+                <button class="download-btn" id="downloadBtn">
+                    <span>📥</span>
+                    <span>Download CSV</span>
+                </button>
+                <button class="dark-mode-toggle" id="darkModeToggle">
+                    <span id="modeIcon">🌙</span>
+                    <span id="modeText">Dark</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Kernel</label>
+                <select id="kernelSelect">
+                    <option value="vector_addition">Vector Addition (4 metrics)</option>
+                    <option value="batched_matmul">Batched Matrix Multiplication (7 metrics)</option>
+                    <option value="softmax_forward">Softmax Forward (11 metrics)</option>
+                    <option value="softmax_backward">Softmax Backward (13 metrics)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Metric</label>
+                <select id="metricSelect">
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat">
+                <div class="stat-value" id="avgSpeedup">-</div>
+                <div class="stat-label">Avg Speedup</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="maxSpeedup">-</div>
+                <div class="stat-label">Max Speedup</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box best"></div>
+                <span>Best</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box second"></div>
+                <span>Second</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box worst"></div>
+                <span>Worst</span>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="perf-table" id="dataTable">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>Made with ❤️ by Red Hat PyTorch Engineering Interns</p>
+        </footer>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
